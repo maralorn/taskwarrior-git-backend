@@ -1,9 +1,11 @@
 # taskwarrior-git-backend
 An experimental task-sync alternative via git written in Haskell
 
-Warning: This is experimental. The idea is that you create a git repo that contains the ground truth for your tasks. This can eat all of your tasks.
+**Warning: This is experimental. The idea is that you create a git repo that contains the ground truth for your tasks. This can eat all of your tasks.**
 
-## Work-in-progress: The features below are not yet implemented
+**Work-in-progress: The features below are not yet implemented**
+
+## Usage
 
 1. Install this app: e.g. checkout and `cabal install .` Make sure that the app is in $PATH after that or that you call it with absolute paths.
 2. Create a git-repo at the path of your choice `/your/repo`.
