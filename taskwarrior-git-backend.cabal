@@ -32,11 +32,13 @@ library
   build-depends:
     , aeson
     , base                  ^>=4.12.0.0
+    , filepath
     , optparse-generic
     , relude
     , taskwarrior           ^>=0.2.0.0
     , text
     , unordered-containers
+    , uuid
 
   mixins:
     base hiding (Prelude),

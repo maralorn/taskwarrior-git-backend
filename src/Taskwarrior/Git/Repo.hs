@@ -8,13 +8,18 @@ module Taskwarrior.Git.Repo
   )
 where
 
-import           Taskwarrior.Task               ( Task )
+import           Taskwarrior.Task               ( Task
+                                                , uuid
+                                                )
 import           Data.Aeson                     ( eitherDecodeFileStrict'
                                                 , encodeFile
                                                 , toJSON
                                                 , Value(Object)
                                                 )
 import           Data.HashMap.Strict            ( filterWithKey )
+import           Data.UUID                     as UUID
+import           System.FilePath                ( (</>) )
+import           Taskwarrior.IO                 ( getTasks )
 
 type GitRepo = FilePath
 
@@ -34,7 +39,13 @@ load :: GitRepo -> IO ()
 load = undefined
 
 save :: GitRepo -> Task -> IO ()
-save = undefined
+save repo task = writeTask (taskToFilepath repo task) task
 
-saveAll :: GitRepo -> IO ()
-saveAll = undefined
+saveAll :: GitRepo -> Bool -> IO ()
+saveAll repo doCommit = getTasks [] >>= mapM_ (save repo)
+
+taskToFilename :: Task -> FilePath
+taskToFilename task = UUID.toString (uuid task) <> ".task"
+
+taskToFilepath :: GitRepo -> Task -> FilePath
+taskToFilepath repo task = repo </> taskToFilename task

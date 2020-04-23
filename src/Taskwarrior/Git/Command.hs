@@ -24,14 +24,16 @@ import           Taskwarrior.Git.Hooks          ( onAdd
 type RepoOption
   = FilePath <?> "The path to the git repository where your tasks are saved."
 
+type CommitOption = Bool <?> "Commit the changes (if any) to git. UNIMPLEMENTED"
+
 toRepo :: RepoOption -> GitRepo
 toRepo = unHelpful
 
 data Command =
     Load { repo :: RepoOption }
-  | Save { repo :: RepoOption }
-  | OnAdd { repo :: RepoOption }
-  | OnModify { repo :: RepoOption }
+  | Save { repo :: RepoOption , commit :: CommitOption }
+  | OnAdd { repo :: RepoOption , commit :: CommitOption }
+  | OnModify { repo :: RepoOption , commit :: CommitOption }
   | Merge
       (FilePath <?> "The path to the ancestor json task file")
       (FilePath <?> "The path to the current json task file. The result will be written to this file.")
@@ -49,9 +51,9 @@ command :: IO ()
 command = do
   cmd :: Command <- getRecord "taskwarrior-git"
   case cmd of
-    Load     r -> load $ toRepo r
-    Save     r -> saveAll $ toRepo r
-    OnAdd    r -> onAdd $ toRepo r
-    OnModify r -> onModify $ toRepo r
+    Load r       -> load $ toRepo r
+    Save     r c -> saveAll (toRepo r) (unHelpful c)
+    OnAdd    r c -> onAdd (toRepo r) (unHelpful c)
+    OnModify r c -> onModify (toRepo r) (unHelpful c)
     Merge ancestor old new _ _ ->
       merge (unHelpful ancestor) (unHelpful old) (unHelpful new)
