@@ -1,0 +1,53 @@
+cabal-version:      2.4
+name:               taskwarrior-git-backend
+version:            0.1.0.0
+synopsis:           An alternative sync mechanism for taskwarrior.
+description:        Sync your taskwarrior by using a git repo as ground truth.
+homepage:           https://github.com/maralorn/taskwarrior-git-backend
+bug-reports:        https://github.com/maralorn/taskwarrior-git-backend/issues
+license:            AGPL-3.0-or-later
+license-file:       LICENSE
+author:             Malte Brandy
+maintainer:         malte.brandy@maralorn.de
+category:           Taskwarrior
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+library
+  exposed-modules:
+    Taskwarrior.Git.Hooks
+    Taskwarrior.Git.Main
+    Taskwarrior.Git.Merge
+    Taskwarrior.Git.Repo
+
+  default-extensions: OverloadedStrings
+  build-depends:
+    , aeson
+    , base              ^>=4.12.0.0
+    , optparse-generic
+    , relude
+    , taskwarrior       ^>=0.2.0.0
+    , text
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude)
+
+  hs-source-dirs:     src
+  default-language:   Haskell2010
+  ghc-options:
+    -Weverything -Wno-unsafe -Wno-safe -Wno-all-missed-specialisations
+    -Wno-implicit-prelude -Wno-missed-specialisations
+    -Wno-monomorphism-restriction -Wno-partial-fields
+    -Wno-missing-import-lists -Wno-orphans -Wcompat
+
+executable taskwarrior-git
+  main-is:          Main.hs
+  build-depends:
+    , base                     ^>=4.12.0.0
+    , taskwarrior-git-backend
+
+  hs-source-dirs:   src-bin
+  default-language: Haskell2010
+  ghc-options:      -threaded
