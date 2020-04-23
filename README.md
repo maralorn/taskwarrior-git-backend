@@ -3,7 +3,7 @@ An experimental task-sync alternative via git written in Haskell
 
 **Warning: This is experimental. The idea is that you create a git repo that contains the ground truth for your tasks. This can eat all of your tasks.**
 
-**Work-in-progress: The features below are not yet implemented**
+**Work-in-progress: The features below are not yet implemented** TODO: Write this app.
 
 ## Usage
 
@@ -22,6 +22,7 @@ An experimental task-sync alternative via git written in Haskell
    ```
    taskwarrior-git merge
    ```
+   TODO: Figure out how exactly one does this.
    If you jump this step you can still use this app. But you might get merge-conflicts.
 6. Run `taskwarrior-git load -r /your/repo` when ever there is a change in the git repo which was not triggered by the above hooks or init. **WARNING: This will overwrite all changes that happened in taskwarrior but where not written to the git repo.**
 
@@ -29,4 +30,4 @@ Hint: taskwarrior-git calls taskwarrior and therefore respects the `$TASKRC` and
 
 Note: If you used `task sync` (which would kind of defeat the purpos of this). You would need to run `taskwarrior-git save` after every sync. Or create an on-sync hook.
 
-Tipp: Create a taskwarrior subcommand that pulls, rebases/merges, pushes and loads in one step.
+Tipp: Create a taskwarrior subcommand that pulls, rebases/merges, pushes and loads in one step. TODO: Provide an example.
