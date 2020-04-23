@@ -7,7 +7,7 @@ An experimental task-sync alternative via git written in Haskell
 
 ## Usage
 
-1. Install this app: e.g. checkout and `cabal install .` Make sure that the app is in $PATH after that or that you call it with absolute paths.
+1. Install this app: e.g. checkout and `cabal install .` Make sure that the app is in `$PATH` after that or that you call it with absolute paths. (Make especially sure that the binary can always be found when you run taskwarrior because otherwise the hooks will fail.)
 2. Create a git-repo at the path of your choice `/your/repo`.
 3. Run `taskwarrior-git save -r /your/repo`. This will commit all your current taskwarrior tasks to the repo.
 4. Create the following on-modify and on-add hooks:
