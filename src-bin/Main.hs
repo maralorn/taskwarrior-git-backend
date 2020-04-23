@@ -1,8 +1,4 @@
-module Main where
-
-import qualified MyLib (someFunc)
+import           Taskwarrior.Git.Command        ( command )
 
 main :: IO ()
-main = do
-  putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+main = command

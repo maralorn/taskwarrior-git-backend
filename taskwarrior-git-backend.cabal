@@ -16,19 +16,27 @@ extra-source-files:
 
 library
   exposed-modules:
+    Taskwarrior.Git.Command
     Taskwarrior.Git.Hooks
-    Taskwarrior.Git.Main
     Taskwarrior.Git.Merge
     Taskwarrior.Git.Repo
 
-  default-extensions: OverloadedStrings
+  default-extensions:
+    DataKinds
+    DeriveGeneric
+    OverloadedStrings
+    ScopedTypeVariables
+    TupleSections
+    TypeOperators
+
   build-depends:
     , aeson
-    , base              ^>=4.12.0.0
+    , base                  ^>=4.12.0.0
     , optparse-generic
     , relude
-    , taskwarrior       ^>=0.2.0.0
+    , taskwarrior           ^>=0.2.0.0
     , text
+    , unordered-containers
 
   mixins:
     base hiding (Prelude),
