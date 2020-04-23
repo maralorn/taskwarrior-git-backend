@@ -31,3 +31,9 @@ Hint: taskwarrior-git calls taskwarrior and therefore respects the `$TASKRC` and
 Note: If you used `task sync` (which would kind of defeat the purpos of this). You would need to run `taskwarrior-git save` after every sync. Or create an on-sync hook.
 
 Tipp: Create a taskwarrior subcommand that pulls, rebases/merges, pushes and loads in one step. TODO: Provide an example.
+
+## Help
+
+Run `taskwarrior-git --help`.
+
+Do not hesitate to contact me via issue, mail or at #haskell-taskwarrior in #freenode.
