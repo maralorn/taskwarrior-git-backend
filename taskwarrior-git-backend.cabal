@@ -25,17 +25,22 @@ library
     DataKinds
     DeriveGeneric
     OverloadedStrings
+    RecordWildCards
     ScopedTypeVariables
     TupleSections
     TypeOperators
+    ViewPatterns
 
   build-depends:
     , aeson
+    , aeson-pretty
     , base                  ^>=4.12.0.0
+    , directory
     , filepath
     , optparse-generic
+    , process
     , relude
-    , taskwarrior           ^>=0.2.0.0
+    , taskwarrior           ^>=0.2.1.0
     , text
     , unordered-containers
     , uuid

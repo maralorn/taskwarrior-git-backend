@@ -39,7 +39,7 @@ merge ancestorPath oldPath newPath = do
 -- 4. The following fields are handled more delicately: annotations, tags, depends
 threeWayMerge :: Task -> Task -> Task -> Task
 threeWayMerge ancestor old' new'
-  | Just True == liftA2 (<=) (modified new') (modified old') = threeWayMerge'
+  | Just True == liftA2 (<) (modified new') (modified old') = threeWayMerge'
     new'
     old'
   | otherwise = threeWayMerge' old' new'

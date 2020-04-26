@@ -4,10 +4,17 @@ module Taskwarrior.Git.Hooks
   )
 where
 
-import           Taskwarrior.Git.Repo           ( GitRepo )
+import           Taskwarrior.Git.Repo           ( GitRepo
+                                                , save
+                                                )
+import qualified Taskwarrior.IO                as TWIO
 
 onAdd :: GitRepo -> Bool -> IO ()
-onAdd = undefined
+onAdd repo doCommit = TWIO.onAdd $ \task -> do
+  save repo doCommit [task]
+  pure task
 
 onModify :: GitRepo -> Bool -> IO ()
-onModify = undefined
+onModify repo doCommit = TWIO.onModify $ \_ modified -> do
+  save repo doCommit [modified]
+  pure modified
