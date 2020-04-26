@@ -14,7 +14,7 @@ An experimental task-sync alternative via git written in Haskell
    ```
    taskwarrior-git on-add -r /your/repo --commit
    ```
-   
+
    `~/.task/hooks/on-modify.git-backend`:
    ```
    taskwarrior-git on-modify -r /your/repo --commit
@@ -26,7 +26,7 @@ An experimental task-sync alternative via git written in Haskell
    ```
    *.task merge=tasks
    ```
-   
+
    `/your/repo/.git/config`:
    ```
    ...
@@ -49,6 +49,20 @@ An experimental task-sync alternative via git written in Haskell
 ## On Disk Format
 
 Files will be saved as pretty-printed JSON without the keys `id` and `urgency` under `/your/repo/<uuid>.task`.
+
+## Pros & Cons
+
+### Pros
+
+* You get all the advantages from git. An understandable history and you probably know exactly how to setup sync.
+
+### Cons
+
+* This breaks modified dates a bit. Taskwarrior ignores imported modified timestamps and sets them based on the time of import. This will in general also mean, that in the history of changes to one task changes that happend on another host will have the timestamp of the import and not the original timestamp. (Taskwarrior git will not commit a task as changed if only the modified date changed to avoid a lot of unnecessary commits.)
+
+### Merge algorithm
+
+* I don‘t know exactly how the `task sync` merge algorithm works. My guess is that my merge algorithm might be better in some situations and worse in others. But better is probably subjective here anyways.
 
 ## Help
 
