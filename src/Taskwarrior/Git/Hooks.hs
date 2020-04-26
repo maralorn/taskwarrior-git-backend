@@ -8,6 +8,8 @@ import           Taskwarrior.Git.Repo           ( GitRepo
                                                 , save
                                                 )
 import qualified Taskwarrior.IO                as TWIO
+import           Taskwarrior.Task               ( modified )
+import           Data.Time.Clock                ( getCurrentTime )
 
 onAdd :: GitRepo -> Bool -> IO ()
 onAdd repo doCommit = TWIO.onAdd $ \task -> do
@@ -16,5 +18,6 @@ onAdd repo doCommit = TWIO.onAdd $ \task -> do
 
 onModify :: GitRepo -> Bool -> IO ()
 onModify repo doCommit = TWIO.onModify $ \_ modified -> do
-  save repo doCommit [modified]
+  now <- getCurrentTime -- Overwriting the modified timestamp here because taswarrior seems to only set it after running the hook
+  save repo doCommit [modified { modified = Just now }]
   pure modified
