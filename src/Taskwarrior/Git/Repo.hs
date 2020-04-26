@@ -53,10 +53,15 @@ writeTask path =
     . taskToDiskJson
 
 taskToDiskJson :: Task -> Value
-taskToDiskJson task = case toJSON task of
-  Object obj ->
-    Object $ filterWithKey (const . (`notElem` ["id", "urgency"])) obj
-  _ -> error ("Task was not encoded as a JSON object. This is a bug.")
+taskToDiskJson = taskToFilteredJson ["id", "urgency"]
+
+taskToRelevantJson :: Task -> Value
+taskToRelevantJson = taskToFilteredJson ["id", "urgency", "modified"]
+
+taskToFilteredJson :: [Text] -> Task -> Value
+taskToFilteredJson filteredKeys task = case toJSON task of
+  Object obj -> Object $ filterWithKey (const . (`notElem` filteredKeys)) obj
+  _          -> error ("Task was not encoded as a JSON object. This is a bug.")
 
 readTaskMay :: FilePath -> IO (Maybe Task)
 readTaskMay path =
@@ -150,7 +155,7 @@ save repo doCommit tasks = do
     when doCommit $ commit repo (commitMessage neChanges)
 
 hasChanged :: Maybe Task -> Task -> Bool
-hasChanged (Just old) new = taskToDiskJson old /= taskToDiskJson new
+hasChanged (Just old) new = taskToRelevantJson old /= taskToRelevantJson new
 hasChanged _          _   = True
 
 commitMessage :: NonEmpty (Maybe Task, Task) -> Text
