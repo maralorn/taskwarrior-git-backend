@@ -38,8 +38,6 @@ data Command =
       (FilePath <?> "The path to the ancestor json task file")
       (FilePath <?> "The path to the current json task file. The result will be written to this file.")
       (FilePath <?> "The path to the json task file to merge into the current file.")
-      (Maybe String <?> "Conflict marker. Ignored. We will never report conflicts")
-      (Maybe FilePath <?> "Finale name. Ignored.")
    deriving (Generic, Show)
 
 instance ParseRecord Command where
@@ -55,5 +53,5 @@ command = do
     Save     r c -> saveAll (toRepo r) (unHelpful c)
     OnAdd    r c -> onAdd (toRepo r) (unHelpful c)
     OnModify r c -> onModify (toRepo r) (unHelpful c)
-    Merge ancestor old new _ _ ->
+    Merge ancestor old new ->
       merge (unHelpful ancestor) (unHelpful old) (unHelpful new)
