@@ -14,26 +14,22 @@ import           Options.Generic                ( type (<?>)
                                                 )
 import           Taskwarrior.Git.Repo           ( load
                                                 , saveAll
-                                                , GitRepo
                                                 )
 import           Taskwarrior.Git.Merge          ( merge )
 import           Taskwarrior.Git.Hooks          ( onAdd
                                                 , onModify
                                                 )
+import           Taskwarrior.Git.Config         ( readConfig
+                                                , Config
+                                                )
 
-type RepoOption
-  = FilePath <?> "The path to the git repository where your tasks are saved."
-
-type CommitOption = Bool <?> "Commit the changes (if any) to git. UNIMPLEMENTED"
-
-toRepo :: RepoOption -> GitRepo
-toRepo = unHelpful
+type ConfigFileOpt = Maybe Text <?> "Config file"
 
 data Command =
-    Load { repo :: RepoOption }
-  | Save { repo :: RepoOption , commit :: CommitOption }
-  | OnAdd { repo :: RepoOption , commit :: CommitOption }
-  | OnModify { repo :: RepoOption , commit :: CommitOption }
+    Load { config :: ConfigFileOpt }
+  | Save { config :: ConfigFileOpt }
+  | OnAdd { config :: ConfigFileOpt }
+  | OnModify { config :: ConfigFileOpt }
   | Merge
       (FilePath <?> "The path to the ancestor json task file")
       (FilePath <?> "The path to the current json task file. The result will be written to this file.")
@@ -45,13 +41,16 @@ instance ParseRecord Command where
     { shortNameModifier = firstLetter
     }
 
+getConfig :: ConfigFileOpt -> IO Config
+getConfig = readConfig . unHelpful
+
 command :: IO ()
 command = do
   cmd :: Command <- getRecord "taskwarrior-git"
   case cmd of
-    Load r       -> load $ toRepo r
-    Save     r c -> saveAll (toRepo r) (unHelpful c)
-    OnAdd    r c -> onAdd (toRepo r) (unHelpful c)
-    OnModify r c -> onModify (toRepo r) (unHelpful c)
+    Load     configFile -> load =<< getConfig configFile
+    Save     configFile -> saveAll =<< getConfig configFile
+    OnAdd    configFile -> onAdd =<< getConfig configFile
+    OnModify configFile -> onModify =<< getConfig configFile
     Merge ancestor old new ->
       merge (unHelpful ancestor) (unHelpful old) (unHelpful new)

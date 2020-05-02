@@ -8,7 +8,9 @@ module Taskwarrior.Git.Repo
   )
 where
 
-import           Taskwarrior.Task               ( status
+import           Taskwarrior.Task               ( modified
+                                                , until
+                                                , status
                                                 , description
                                                 , Task(Task)
                                                 , uuid
@@ -27,6 +29,7 @@ import           Data.HashMap.Strict            ( lookup
                                                 , filterWithKey
                                                 )
 import qualified Data.UUID                     as UUID
+import           Data.UUID                      ( UUID )
 import           System.FilePath                ( (</>)
                                                 , takeExtension
                                                 , dropExtensions
@@ -38,6 +41,13 @@ import           System.Directory               ( listDirectory
                                                 , doesFileExist
                                                 )
 import           System.Process                 ( readProcess )
+import           Taskwarrior.Git.Config         ( Config
+                                                , repository
+                                                , commit
+                                                )
+import           Data.Time.Clock                ( getCurrentTime
+                                                , UTCTime
+                                                )
 
 type GitRepo = FilePath
 
@@ -67,18 +77,47 @@ readTaskMay :: FilePath -> IO (Maybe Task)
 readTaskMay path =
   ifM (doesFileExist path) (Just <$> readTask path) (pure Nothing)
 
-load :: GitRepo -> IO ()
-load repo = do
+readSanitizedTask :: Config -> UUID.UUID -> IO Task
+readSanitizedTask config uuid = do
+  let path = uuidToFilepath (toString $ repository config) uuid
+  task          <- readTask path
+  sanitizedTask <- sanitizeTask task
+  when (hasChanged (Just task) sanitizedTask) $ save config [sanitizedTask]
+  pure sanitizedTask
+
+sanitizeTask :: Task -> IO Task
+sanitizeTask task = do
+  now <- getCurrentTime
+  pure . checkUntil now . checkWaiting now $ task
+
+checkUntil :: UTCTime -> Task -> Task
+checkUntil now task
+  | Status.Pending <- status task, Just until_ <- until task, until_ < now = task
+    { status   = Status.Deleted now
+    , modified = Just now
+    }
+  | otherwise = task
+
+checkWaiting :: UTCTime -> Task -> Task
+checkWaiting now task
+  | Status.Waiting wait_ <- status task, wait_ < now = task
+    { status = Status.Pending
+    }
+  | otherwise = task
+
+load :: Config -> IO ()
+load config = do
   loadedTasks <- fromList . fmap (\task -> (uuid task, task)) <$> getTasks []
-  files       <- filter ((".task" ==) . takeExtension) <$> listDirectory repo
+  files       <- filter ((".task" ==) . takeExtension)
+    <$> listDirectory (toString $ repository config)
   let taskToLoad path = do
-        task     <- readTask (repo </> path)
         fileUuid <-
           maybe (fail (path ++ " has no filename of form '<uuid>.task'.")) pure
           . UUID.fromString
           . dropExtensions
           $ path
         let loaded = lookup fileUuid loadedTasks
+        task <- readSanitizedTask config fileUuid
         if hasChanged loaded task then pure (Just task) else pure Nothing
   tasksToLoad <- mapMaybe id <$> forM files taskToLoad
   when (not $ null tasksToLoad) $ saveTasks tasksToLoad
@@ -129,17 +168,20 @@ parseLine _ = Nothing
 callGit :: GitRepo -> [String] -> String -> IO String
 callGit repo command = readProcess "git" ("-C" : repo : command)
 
-commit :: GitRepo -> Text -> IO ()
-commit repo msg = void $ callGit repo ["commit", "-F", "-"] (toString msg)
+makeCommit :: GitRepo -> Text -> IO ()
+makeCommit repo msg = void $ callGit repo ["commit", "-F", "-"] (toString msg)
 
 stage :: GitRepo -> Text -> IO ()
 stage repo file = void $ callGit repo ["add", toString file] ""
 
-save :: GitRepo -> Bool -> [Task] -> IO ()
-save repo doCommit tasks = do
+save :: Config -> [Task] -> IO ()
+save config tasks = do
+  let whenCommit = when (commit config)
+      repo       = toString $ repository config
   changes <-
     mapMaybe id
-      <$> (forM tasks $ \new -> do
+      <$> (forM tasks $ \unsanitizedNew -> do
+            new <- sanitizeTask unsanitizedNew
             old <- readTaskMay (taskToFilepath repo new)
             if hasChanged old new
               then do
@@ -147,12 +189,12 @@ save repo doCommit tasks = do
               else pure Nothing
           )
   whenNotNull changes $ \neChanges -> do
-    when doCommit
+    whenCommit
       $ checkCleanForWrite repo (taskToFilename . snd <$> toList neChanges)
     forM_ changes $ \(_, new) -> do
       writeTask (taskToFilepath repo new) new
-      when doCommit $ stage repo (taskToFilename new)
-    when doCommit $ commit repo (commitMessage neChanges)
+      whenCommit $ stage repo (taskToFilename new)
+    whenCommit $ makeCommit repo (commitMessage neChanges)
 
 hasChanged :: Maybe Task -> Task -> Bool
 hasChanged (Just old) new = taskToRelevantJson old /= taskToRelevantJson new
@@ -207,11 +249,17 @@ getChange (Just _, Task { status = Status.Deleted _, ..}) =
   (Deleted, description)
 getChange (_, Task {..}) = (Changed, description)
 
-saveAll :: GitRepo -> Bool -> IO ()
-saveAll repo doCommit = getTasks [] >>= save repo doCommit
+saveAll :: Config -> IO ()
+saveAll config = getTasks [] >>= save config
 
 taskToFilename :: Task -> Text
-taskToFilename task = toText (UUID.toString (uuid task) <> ".task")
+taskToFilename = uuidToFilename . uuid
+
+uuidToFilename :: UUID -> Text
+uuidToFilename uuid = toText (UUID.toString uuid <> ".task")
+
+uuidToFilepath :: GitRepo -> UUID -> FilePath
+uuidToFilepath repo uuid = repo </> toString (uuidToFilename uuid)
 
 taskToFilepath :: GitRepo -> Task -> FilePath
 taskToFilepath repo task = repo </> toString (taskToFilename task)
