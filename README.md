@@ -9,10 +9,12 @@ An experimental task-sync alternative via git written in Haskell
 2. Create a git-repo at the path of your choice `/your/repo`.
 3. Create a config file, either at `~/.config/taskwarrior-git/config.dhall` or at `$TASKWARRIOR_GIT_CONFIG`. (Later takes precedence if exists.
 The config format is [Dhall](https://dhall-lang.org).
+```dhall
 {
   repository = "/your/repo", -- This Option is mandatory.
   commit = True -- Default is False
 }
+```
 4. Run `taskwarrior-git save`. This will commit all your current taskwarrior tasks to the repo.
 5. Create the following on-modify and on-add hooks:
 
