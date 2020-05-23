@@ -23,7 +23,8 @@ import           Taskwarrior.Git.Config         ( readConfig
                                                 , Config
                                                 )
 
-type ConfigFileOpt = Maybe Text <?> "Config file"
+type ConfigFileOpt
+  = Maybe Text <?> "Path to config file. Default: $TASKWARRIOR_GIT_CONFIG or ~/.config/taskwarrior-git/config.dhall"
 
 data Command =
     Load { config :: ConfigFileOpt }

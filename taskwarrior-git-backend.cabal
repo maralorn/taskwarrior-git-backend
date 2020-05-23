@@ -42,11 +42,12 @@ library
     , optparse-generic
     , process
     , relude
-    , taskwarrior           ^>=0.2.1.0
+    , taskwarrior           ^>=0.3.0.0
     , text
     , time
     , unordered-containers
     , uuid
+    , containers
 
   mixins:
     base hiding (Prelude),

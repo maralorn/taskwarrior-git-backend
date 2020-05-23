@@ -16,6 +16,8 @@ import           Data.Maybe                     ( mapMaybe )
 import           Taskwarrior.Git.Repo           ( writeTask
                                                 , readTask
                                                 )
+import qualified Data.Set                      as Set
+import           Data.Set                       ( Set )
 
 merge :: FilePath -> FilePath -> FilePath -> IO ()
 merge ancestorPath oldPath newPath = do
@@ -55,12 +57,12 @@ threeWayMerge ancestor old' new'
     , modified       = mergeSimpleField modified ancestor old new
     , due            = mergeSimpleField due ancestor old new
     , until          = mergeSimpleField until ancestor old new
-    , annotations    = mergeListField annotations ancestor old new
+    , annotations    = mergeSetField annotations ancestor old new
     , scheduled      = mergeSimpleField scheduled ancestor old new
     , project        = mergeSimpleField project ancestor old new
     , priority       = mergeSimpleField priority ancestor old new
-    , depends        = mergeListField depends ancestor old new
-    , tags           = mergeListField tags ancestor old new
+    , depends        = mergeSetField depends ancestor old new
+    , tags           = mergeSetField tags ancestor old new
     , urgency        = mergeSimpleField urgency ancestor old new
     , uda            = mergeUDAField ancestor old new
     }
@@ -72,8 +74,8 @@ fieldMerger merger field ancestor old new =
 mergeSimpleField :: Eq a => (Task -> a) -> Task -> Task -> Task -> a
 mergeSimpleField = fieldMerger mergeSimple
 
-mergeListField :: Eq a => (Task -> [a]) -> Task -> Task -> Task -> [a]
-mergeListField = fieldMerger mergeList
+mergeSetField :: Ord a => (Task -> Set a) -> Task -> Task -> Task -> Set a
+mergeSetField = fieldMerger mergeSet
 
 mergeUDAField :: Task -> Task -> Task -> UDA
 mergeUDAField = fieldMerger mergeUDA uda
@@ -83,10 +85,12 @@ mergeSimple ancestor old new | ancestor == new = old
                              | -- This covers the cases new == old.
                                otherwise       = new
 
-mergeList :: Eq a => [a] -> [a] -> [a] -> [a]
-mergeList ancestor old new =
-  filter (\a -> not (a `elem` ancestor && a `notElem` old)) new
-    <> filter (\a -> a `notElem` new && a `notElem` ancestor) old
+mergeSet :: Ord a => Set a -> Set a -> Set a -> Set a
+mergeSet ancestor old new = Set.unions
+  [ Set.difference new ancestor
+  , Set.difference old ancestor
+  , Set.intersection new old
+  ]
 
 mergeUDA :: UDA -> UDA -> UDA -> UDA
 mergeUDA ancestor old new =
