@@ -8,7 +8,7 @@ where
 
 import           Dhall                          ( auto
                                                 , input
-                                                , Interpret
+                                                , FromDhall
                                                 )
 
 data Config = Config {
@@ -16,7 +16,7 @@ data Config = Config {
     commit :: Bool
 } deriving (Show, Eq, Generic)
 
-instance Interpret Config
+instance FromDhall Config
 
 readConfig :: Maybe Text -> IO Config
 readConfig configFile = input auto (defaults <> " // " <> config)
