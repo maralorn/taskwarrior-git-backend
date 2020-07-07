@@ -40,6 +40,7 @@ import           Taskwarrior.IO                 ( saveTasks
 import           System.Directory               ( listDirectory
                                                 , doesFileExist
                                                 )
+import           Control.Monad.Catch            ( onException )
 import           System.Process                 ( readProcess )
 import           Taskwarrior.Git.Config         ( Config
                                                 , repository
@@ -122,18 +123,11 @@ load config = do
   tasksToLoad <- mapMaybe id <$> forM files taskToLoad
   when (not $ null tasksToLoad) $ saveTasks tasksToLoad
 
-checkCleanForWrite :: GitRepo -> [Text] -> IO ()
-checkCleanForWrite repo files = do
+checkCleanForWrite :: GitRepo -> IO ()
+checkCleanForWrite repo = do
   statusLines <- gitStatus repo
-  when (any ((`notElem` [Unmodified, Untracked]) . gitIndex) statusLines)
-    $ fail ("Git repo " <> repo <> " has staged changes.")
-  whenJust (find (`elem` (gitPath <$> statusLines)) files) $ \file -> fail
-    (  "File "
-    <> toString file
-    <> " in git repo "
-    <> repo
-    <> " has uncommited changes."
-    )
+  when (any ((/= Unmodified) . gitIndex) $ statusLines)
+    $ fail ("Git repo " <> repo <> " is dirty.")
 
 data GitCode = Unmodified | Untracked | Other deriving (Eq, Show)
 
@@ -171,6 +165,9 @@ callGit repo command = readProcess "git" ("-C" : repo : command)
 makeCommit :: GitRepo -> Text -> IO ()
 makeCommit repo msg = void $ callGit repo ["commit", "-F", "-"] (toString msg)
 
+reset :: GitRepo -> IO ()
+reset repo = void $ callGit repo ["reset", "--hard"] ""
+
 stage :: GitRepo -> Text -> IO ()
 stage repo file = void $ callGit repo ["add", toString file] ""
 
@@ -189,12 +186,20 @@ save config tasks = do
               else pure Nothing
           )
   whenNotNull changes $ \neChanges -> do
-    whenCommit
-      $ checkCleanForWrite repo (taskToFilename . snd <$> toList neChanges)
-    forM_ changes $ \(_, new) -> do
-      writeTask (taskToFilepath repo new) new
-      whenCommit $ stage repo (taskToFilename new)
-    whenCommit $ makeCommit repo (commitMessage neChanges)
+    whenCommit $ checkCleanForWrite repo
+    onException
+      (do
+        forM_ changes $ \(_, new) -> do
+          writeTask (taskToFilepath repo new) new
+          whenCommit $ stage repo (taskToFilename new)
+        whenCommit $ makeCommit repo (commitMessage neChanges)
+      )
+      (do
+        putStrLn $ "Writing changes to repo " <> repo <> " failed"
+        whenCommit $ do
+          putStrLn "Reseting to HEAD"
+          reset repo
+      )
 
 hasChanged :: Maybe Task -> Task -> Bool
 hasChanged (Just old) new = taskToRelevantJson old /= taskToRelevantJson new
