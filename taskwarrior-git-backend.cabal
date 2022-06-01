@@ -44,7 +44,7 @@ library
     , optparse-generic
     , process
     , relude
-    , taskwarrior           ^>=0.3.0.0
+    , taskwarrior
     , text
     , time
     , unordered-containers
