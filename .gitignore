@@ -1,5 +1,4 @@
 dist-newstyle
 .direnv
 .envrc
-default.nix
-shell.nix
+.pre-commit-config.yaml

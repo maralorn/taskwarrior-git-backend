@@ -25,6 +25,8 @@ library
   default-extensions:
     DataKinds
     DeriveGeneric
+    DerivingStrategies
+    ImportQualifiedPost
     OverloadedStrings
     RecordWildCards
     ScopedTypeVariables
